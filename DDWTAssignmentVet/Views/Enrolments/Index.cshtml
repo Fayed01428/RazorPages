@@ -1,0 +1,121 @@
+﻿@using WebMatrix.Data;
+@{
+    //open and make connection with the database
+    var db = Database.Open("VetCMS");
+    var id = Request.QueryString["id"];
+
+    //select query to run
+    var sql = "SELECT Courses.name AS courseName, Courses.photo, Courses.description, Courses.courseID, " +
+              "Courses.date AS courseDate, People.addressLine1, People.addressLine2, " +
+              "Trainers.specialty, Trainers.description AS trainerDescription, " +
+              "Staff.email, " +
+              "CONCAT(People.firstName, ' ', People.lastName) AS trainerName " +
+              "FROM Trainers " +
+              "JOIN People on People.personID = Trainers.trainerID " +
+              "JOIN Courses on Courses.trainerID = Trainers.trainerID " +
+              "JOIN Staff ON Staff.staffID = Trainers.trainerID " +
+              "WHERE Courses.courseID = @0";
+
+    var data = db.QuerySingle(sql, id);
+
+    //select another query to run
+    var sql2 = "SELECT Animals.name, Courses.name, Animals.dob, CONCAT(People.firstName,' ',People.lastName) as owner, " +
+                "DATEDIFF(YEAR, Animals.dob, getdate()) AS 'age', Animals.gender " +
+                "FROM Animals " +
+                "JOIN Enrolments ON Enrolments.PuppyID = Animals.animalID " +
+                "JOIN Courses ON Courses.courseID = Enrolments.CourseID " +
+                "JOIN People ON People.personID = Animals.ownerID " +
+                "WHERE Courses.courseID = @0";
+
+    var data2 = db.Query(sql2, id);
+
+    //select another query to run
+    var sql3 = "SELECT concat(People.firstName, ' ', people.lastName) AS name, count(Courses.trainerID) AS timesTrained, " +
+                "concat(People.addressLine1, ' ', People.addressLine2) AS address, Staff.email " +
+                "FROM People " +
+                "JOIN Staff " +
+                "ON People.personID = Staff.staffID " +
+                "JOIN Courses " +
+                "ON People.personID = Courses.trainerID " +
+                "WHERE Courses.courseID = @0 " +
+                "GROUP BY concat(People.firstName, ' ', people.lastName), concat(People.addressLine1, ' ', People.addressLine2), Staff.email";
+
+
+    var data3 = db.Query(sql3, id);
+}
+
+<body>
+    <div class="bg-info border border-white py-1 mt-2">
+        <h2 class="text-center">Course Details</h2>
+    </div>
+
+    @if (data != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-13">
+                <div class="card mb-3">
+                    <div class="card-body bg-info border-light">
+                        <div class="py-1 my-1 justify-content-center">
+                            <img src="@data.photo" class="card-title border border-light" style="width: 400px; height: 300px;" )>
+                            <h5 class="card-title border border-light"><b>Enrolments Details</b></h5>
+                        </div>
+                        <div class="card-text border border-light">
+                            <p class="card-text"><b>Course Name: </b>@data.courseName</p>
+                            <p class="card-text"><b>Description: </b>@data.description</p>
+                        </div>
+                    </div>
+                    <div class="card-body bg-info border-light">
+                        <div class="py-1 my-1 justify-content-center">
+                            <h5 class="card-title border border-light"><b>Enrolled Pets</b></h5>
+                        </div>
+                        <div class="row">
+                            @foreach (var d in data2)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card-text border border-light p-3">
+                                        <p class="card-text"><b>Pet Name: </b>@d.name</p>
+                                        <p class="card-text"><b>Date Of Birth: </b>@d.dob</p>
+                                        <p class="card-text"><b>Gender: </b>@d.gender</p>
+                                        <p class="card-text"><b>Age: </b>@d.age</p>
+                                        <p class="card-text"><b>Owner: </b>@d.owner</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body bg-info border-light">
+                        <div class="py-1 my-1 justify-content-center">
+                            <h5 class="card-title border border-light"><b>Trainer Details</b></h5>
+                        </div>
+                        <div>
+                            @foreach (var t in data3)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card-text border border-light p-3">
+                                        <p class="card-text"><b>Trainer Name: </b>@t.name</p>
+                                        <p class="card-text"><b>Address: </b>@t.address</p>
+                                        <p class="card-text"><b>Email: </b>@t.email</p>
+                                        <p class="card-text"><b>Training Courses Given: </b>@t.timesTrained</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="py-1 my-1 justify-content-center">
+                <a href="/Courses/Index" class="btn btn-secondary">Course List</a>
+                <a href="/Courses/Details?id= @data.courseID" class="btn btn-secondary">Course Details</a>
+            </div>
+        </div>
+    }
+</body>
+<style>
+    body {
+        background-image: url('/Content/dog8.jpg');
+        background-size: contain;
+        background-position: center;
+        padding: 90px;
+    }
+</style>

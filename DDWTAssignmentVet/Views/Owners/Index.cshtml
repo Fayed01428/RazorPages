@@ -1,0 +1,169 @@
+﻿@using WebMatrix.Data;
+
+@{
+    //create and open a connection to the database
+    var db = Database.Open("VetCMS");
+
+    //define the sql to run
+    var sql = "SELECT Owners.ownerID, CONCAT(People.firstName,' ', People.lastName) AS OwnerName, Owners.contact, CONCAT(People.addressLine1,' ', People.addressLine2) AS Address " +
+              "FROM Owners " +
+              "JOIN People ON People.personID = Owners.ownerID";
+
+
+    //define the sql to run
+    //define the sql to run
+    var listSql = "SELECT Species.name AS speciesName, CONCAT(People.firstName, ' ', People.lastName) AS ownerName " +
+                   "FROM Owners " +
+                   "JOIN People ON Owners.ownerID = People.personID " +
+                   "JOIN Animals ON Owners.ownerID = Animals.ownerID " +
+                   "JOIN Species ON Animals.speciesID = Species.speciesID";
+
+    //define the count sql to run
+    var countSql = "SELECT CONCAT(People.firstName, ' ', People.lastName) AS ownerName, " +
+                   "SUM(CASE WHEN Species.parentSpeciesID = 1 THEN 1 ELSE 0 END) AS dogs, " + 
+                   "SUM(CASE WHEN Species.parentSpeciesID = 2 THEN 1 ELSE 0 END) AS cats " +
+                   "FROM People " +
+                   "JOIN Animals ON People.personID = Animals.ownerID " +
+                   "JOIN Species ON Species.speciesID = Animals.speciesID " +
+                   "GROUP BY People.firstName, People.lastName"; 
+
+    var ownerName = Request.Form["ownerName"];
+    var address = Request.Form["address"];
+    var contact = Request.Form["contact"];
+    var speciesName = Request.Form["speciesName"];
+
+    if (!String.IsNullOrWhiteSpace(ownerName))
+    {
+        sql += " WHERE CONCAT(People.firstName,' ',People.lastName) LIKE @0";
+        ownerName = "%" + ownerName + "%";
+    }
+
+    if (!String.IsNullOrWhiteSpace(address))
+    {
+        sql += String.IsNullOrWhiteSpace(sql) ? " WHERE" : " AND";
+        sql += " CONCAT(People.addressLine1,' ', People.addressLine2) LIKE @1";
+        address = "%" + address + "%";
+    }
+
+    if (!String.IsNullOrWhiteSpace(contact))
+    {
+        sql += String.IsNullOrWhiteSpace(sql) ? " WHERE" : " AND";
+        sql += " Owners.contact LIKE @2";
+        contact = "%" + contact + "%";
+    }
+
+    if (!String.IsNullOrWhiteSpace(speciesName))
+    {
+        sql += " JOIN Animals ON Owners.ownerID = Animals.ownerID " +
+               "JOIN Species on Animals.speciesID = Species.speciesID";
+        sql += " WHERE Species.name LIKE @3";
+        speciesName = "%" + speciesName + "%";
+    }
+
+    //execute the query, capture and return
+    var data = db.Query(sql, ownerName, address, contact, speciesName);
+
+    var speciesList = db.Query(listSql);
+
+    var count = db.Query(countSql);
+
+}
+
+<body>
+    <div class="outer-background">
+        <div class="bg-info border border-white py-1 mt-2">
+            <h2 class="text-center">Owner List</h2>
+        </div>
+        <br />
+
+        <form method="post" action="/Owners/Index" class="row mb-3">
+            <div class="col-3">
+                <input type="text" name="ownerName" class="form-control" placeholder="Search name" value="@Request.Form["OwnerName"]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+            </div>
+        </form>
+        <form method="post" action="/Owners/Index" class="row mb-3">
+            <div class="col-3">
+                <input type="text" name="address" class="form-control" placeholder="Search address" value="@Request.Form["Address"]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+            </div>
+        </form>
+        <form method="post" action="/Owners/Index" class="row mb-3">
+            <div class="col-3">
+                <input type="text" name="contact" class="form-control" placeholder="Search contact" value="@Request.Form["contact"]" />
+            </div>
+            <div class="col-2">
+                <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+            </div>
+        </form>
+        <form method="post" action="/Owners/Index" class="row mb-3">
+            <div class="col-3">
+                <input type="search" list="speciesList" name="speciesName" id="speciesName" placeholder="Search species" value="@Request.Form["speciesName"]" class="form-control" />
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+            </div>
+        </form>
+
+        <datalist id="speciesList">
+            @foreach (var s in speciesList)
+            {
+                <option value="@s.speciesName"></option>
+            }
+        </datalist>
+
+
+        @if (data.Count() > 0)
+        {
+            <div class="row justify-content-center">
+                @foreach (var row in data)
+                {
+                    <div class="card col-3 m-1 bg-info border-light">
+                        <div class="card-body">
+                            <h5 class="card-title border border-light"> @row.OwnerName</h5>
+                            <p class="card-text border border-light">Address: @row.Address</p>
+                            <p class="card-text border border-light">Contact: @row.contact</p>
+                            <p class="card-text border border-light">
+                                Species: <br />
+                                @foreach (var species in speciesList)
+                                {
+                                    if (species.ownerName == row.OwnerName)
+                                    {
+                                        @species.speciesName <br />
+                                    }
+                                }
+                                @foreach (var c in count)
+                                {
+                                    if (c.ownerName == row.OwnerName)
+                                    {
+                                    <p class="card-text border border-light">Cats: @c.cats</p>
+                                    <p class="card-text border border-light">Dogs: @c.dogs</p>
+                                }
+                            }
+                                <p></p>
+                                <a href="/Owners/Details?id=@row.ownerID" class="btn btn-secondary btn-outline-info text-black" target="blank">View owner Record</a>
+                            </div>
+                        </div>
+                    }
+            </div>
+        }
+        else
+        {
+            <h3 class="text-danger text-center">No matching owner found...</h3>
+        }
+    </div>
+</body>
+<style>
+    body {
+        background-image: url('/Content/dog2.jpg');
+        background-size: contain;
+        background-position: center;
+        padding: 30px;
+    }
+</style>
+
+

@@ -1,0 +1,132 @@
+﻿@using WebMatrix.Data;
+
+@{ 
+    //create and open a connection to the database
+    var db = Database.Open("VetCMS");
+
+    //define the sql query to run
+    var sql = "SELECT Courses.name AS courseName, Courses.photo, Courses.description, courses.courseID, " +
+              "Courses.date as courseDate, " +
+              "CONCAT(People.firstName, ' ', People.lastName) AS trainerName " +
+              "FROM Trainers " +
+              "JOIN People on People.personID = Trainers.trainerID " +
+              "JOIN Courses on Courses.trainerID = Trainers.trainerID";
+
+    var courseName = Request.Form["courseName"];
+    var trainerName = Request.Form["trainerName"];
+    var courseDate = Request.Form["courseDate"];
+    var currentDate = DateTime.Now;
+
+    if (!String.IsNullOrWhiteSpace(courseName))
+    {
+        sql += " WHERE Courses.name LIKE @0";
+        courseName = "%" + courseName + "%";
+    }
+
+    if (!String.IsNullOrWhiteSpace(trainerName))
+    {
+        sql += String.IsNullOrWhiteSpace(sql) ? " WHERE" : " AND";
+        sql += " CONCAT(People.firstName,' ',People.lastName) LIKE @1";
+        trainerName = "%" + trainerName + "%";
+    }
+
+    if (!String.IsNullOrEmpty(courseDate))
+    {
+        sql += String.IsNullOrWhiteSpace(sql) ? " WHERE" : " AND";
+        sql += " Courses.date < @2";
+        sql += " ORDER BY Courses.date ASC";
+    }
+
+    else
+    {
+        sql += " ORDER BY Courses.date DESC";
+    }
+
+
+    //execute the query,capture and return
+    var data = db.Query(sql, courseName, trainerName, currentDate);
+
+}
+
+<body>
+    <div class="bg-info border border-light py-1 mt-2">
+        <h2 class="text-center">Courses List</h2>
+    </div>
+    <br />
+
+    <form method="post" action="/Courses/Index" class="row mb-3">
+        <div class="col-3">
+            <input type="text" name="courseName" class="form-control" placeholder="Search Course" value="@Request.Form["courseName"]" />
+        </div>
+        <div class="col-2">
+            <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+        </div>
+    </form>
+    <form method="post" action="/Courses/Index" class="row mb-3">
+        <div class="col-3">
+            <input type="text" name="trainerName" class="form-control" placeholder="Search Trainer" value="@Request.Form["trainerName"]" />
+        </div>
+        <div class="col-2">
+            <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+        </div>
+    </form>
+    <form method="post" action="/Courses/Index" class="row mb-3">
+        <div col-3>
+            <input type="checkbox" name="courseDate" id="courseDate" @(String.IsNullOrWhiteSpace(Request.Form["showPastCourses"]) ? "" : "checked") />
+            <label for="courseDate" style="font-weight: bold;">Show Previous Courses</label>
+        </div>
+        <div class="col-2">
+            <button type="submit" class="btn btn-info btn-outline-light">Search</button>
+        </div>
+    </form>
+
+    @if (data.Count() > 0)
+    {
+        <div class="row justify-content-center">
+            @foreach (var row in data)
+            {
+                <div class="card col-3 m-1 bg-info border-light">
+                    <br />
+                    <img src="@row.photo" class="card-title border border-light">
+                    <div class="card-body">
+                        <h5 class="card-title border border-light"> @row.courseName</h5>
+                        <p class="card-text border border-light">Trainer Name: @row.trainerName</p>
+                        <p class="card-text border border-light">Description: @row.description</p>
+                        <p class="card-text border border-light">Date: @row.courseDate.ToShortDateString()</p>
+
+                        @{
+                            var enrolments = "select count(Courses.CourseID) as totalEnrolments, Courses.name as courseName, Courses.courseID " +
+                                               "from Enrolments " +
+                                               "join Courses on Enrolments.courseID = Courses.courseID " +
+                                               "join Puppies on Puppies.puppyID = Enrolments.puppyID " +
+                                               "group by Courses.CourseID, Courses.name, Courses.courseID";
+
+                            var enrolmentsData = db.Query(enrolments);
+                            foreach (var e in enrolmentsData)
+                            {
+                                if (e.courseName == row.courseName)
+                                {
+                                    <p class="card-text border border-light">Current Enrolments: @e.totalEnrolments</p>
+                                }
+                            }
+                        }
+
+                        <a href="/Courses/Details?id=@row.courseID" class="btn btn-secondary btn btn-outline-info text-black" target="_blank">View Course Detail</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <h3 class="text-danger text-center">No matching course found...</h3>
+    }
+</body>
+<style>
+    body {
+        background-image: url('/Content/dog5.jpg');
+        background-size: contain;
+        background-position: center;
+        padding: 100px;
+    }
+</style>

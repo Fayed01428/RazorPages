@@ -1,0 +1,99 @@
+﻿@using WebMatrix.Data;
+
+@{
+    // Open the database for connection
+    var db = Database.Open("VetCMS");
+    var id = Request.QueryString["id"];
+
+    var sql = "SELECT Courses.name AS courseName, Courses.photo, Courses.description, Courses.courseID, " +
+          "Courses.date AS courseDate, People.addressLine1, People.addressLine2, " +
+          "Trainers.specialty, Trainers.description AS trainerDescription, " +
+          "Staff.email, " +
+          "CONCAT(People.firstName, ' ', People.lastName) AS trainerName " +
+          "FROM Trainers " +
+          "JOIN People on People.personID = Trainers.trainerID " +
+          "JOIN Courses on Courses.trainerID = Trainers.trainerID " +
+          "JOIN Staff ON Staff.staffID = Trainers.trainerID " +
+          "WHERE Courses.courseID = @0";
+
+    // Execute the query, capture and return
+    var data = db.QuerySingle(sql, id);
+
+    // Previous courses query
+    var prevCourseSql = "SELECT Courses.name AS previousCourses, Courses.photo, Courses.description, Courses.courseID, " +
+                        "Courses.date AS courseDate, " +
+                        "CONCAT(People.firstName, ' ', People.lastName) AS trainerName " +
+                        "FROM Trainers " +
+                        "JOIN People ON People.personID = Trainers.trainerID " +
+                        "JOIN Courses ON Courses.trainerID = Trainers.trainerID " +
+                        "WHERE Courses.date < '2023-12-31 23:59:59'" +
+                        "ORDER BY Courses.date DESC";
+    var prevData = db.Query(prevCourseSql);
+
+}
+
+<body>
+    <div class="bg-info border border-white py-1 mt-2">
+        <h2 class="text-center">Course Details</h2>
+    </div>
+    <br />
+
+    @if (data != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-13">
+                <div class="card mb-3">
+                    <div class="card-body bg-info border-light">
+                        <div class="py-1 my-1 justify-content-center">
+                            <br />
+                            <img src="@data.photo" class="card-title border border-light" style="width: 400px; height: 300px;")>
+                            <h5 class="card-title border border-light">Course Details</h5>
+                        </div>
+                        <div>
+                            <p class="card-text border border-light">Course Name: @data.courseName</p>
+                            <p class="card-text border border-light">Description: @data.description</p>
+                            <div class="py-1 my-1 justify-content-center">
+                                <h5 class="card-title border border-light">Trainer Details</h5>
+                            </div>
+                            <p class="card-text border border-light">Trainer Name: @data.trainerName</p>
+                            <p class="card-text border border-light">Email: @data.email</p>
+                            <p class="card-text border border-light">Address: @data.addressLine1 @data.addressLine2</p>
+                            <p class="card-text border border-light">Specialty: @data.specialty</p>
+                            <p class="card-text border border-light">Description: @data.trainerDescription</p>
+                            <div class="py-1 my-1 justify-content-center">
+                                <h5 class="card-title border border-light">Previous Courses By @data.trainerName</h5>
+                            </div>
+                            @{
+                                foreach (var p in prevData)
+                                {
+                                    if (p.trainerName == data.trainerName)
+                                    {
+                                        <p class="card-text border border-light">@p.previousCourses</p>
+                                    }            
+                                }
+                            }
+                            <div class="py-1 my-1 justify-content-center">
+                                <a href="/Courses/Index" class="btn btn-secondary">Course List</a>
+                                <a href="/Enrolments/Index?id= @data.courseID" class="btn btn-secondary">Enrolments</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    }
+    else
+    {
+        <h3 class="card bg-info border border-light text-danger text-center">No matching course found...</h3>
+    }
+</body>
+<style>
+    body {
+        background-image: url('/Content/dog3.jpeg');
+        background-size: contain;
+        background-position: center;
+        padding: 30px;
+    }
+</style>

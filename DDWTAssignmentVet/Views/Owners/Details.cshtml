@@ -1,0 +1,207 @@
+﻿@using WebMatrix.Data;
+
+@{
+    //create and open connection to the database
+    var db = Database.Open("VetCMS");
+    var id = Request.QueryString["id"];
+
+    //define the sql to run
+    var sql = "SELECT CONCAT(People.firstName, ' ', People.lastName) as ownerName, Owners.contact, " +
+              "People.addressLine1, People.addressLine2 " +
+              "FROM Owners " +
+              "JOIN People " +
+              "ON Owners.ownerID = People.PersonID " +
+              "WHERE Owners.ownerID = @0";
+
+
+    //execute the query, capture and return
+    var data = db.QuerySingle(sql, id);
+
+}
+<body>
+    <div class="bg-info border border-white py-1 mt-2">
+        <h2 class="text-center">Owner Record</h2>
+    </div>
+    <br />
+
+    @if (data != null)
+    {
+        <div class="row justify-content-center">
+            <div class="col-8">
+                <div class="card mb-3">
+                    <div class="card-body bg-info border-light">
+                        <div class="py-1 my-1 justify-content-center">
+                            <h5 class="card-title border border-light">Owner Name: @data.ownerName</h5>
+                        </div>
+                        <p class="card-text border border-light">Contact: @data.contact</p>
+                        <p class="card-text border border-light">Address Details: @data.addressLine1 @data.addressLine2</p>
+                    </div>
+                    <p></p>
+                    <div class="card-body bg-info border border-light">
+                        <div class="py-1 my-1 justify-contect-center">
+                            <h5 class="card-title border border-light">Pet Details</h5>
+                        </div>
+                        @{
+                            var petsql = "SELECT Animals.*, Owners.*,People.*, " +
+                                         "DATEDIFF(YEAR,Animals.dob,GETDATE()) as 'age' , " +
+                                         "CASE WHEN Species.parentSpeciesID = 1 THEN 'Dog' " +
+                                         "WHEN Species.parentSpeciesID = 2 THEN 'Cat' " +
+                                         "END AS species, " +
+                                         "species.name AS speciesName " +
+                                         "FROM Owners " +
+                                         "JOIN People " +
+                                         "ON Owners.ownerID = People.personID " +
+                                         "JOIN Animals " +
+                                         "ON Owners.ownerID = Animals.ownerID " +
+                                         "JOIN Species " +
+                                         "ON Animals.speciesID = Species.speciesID " +
+                                         "WHERE Owners.ownerID = @0";
+
+                            var petdata = db.Query(petsql, Request.QueryString["id"]);
+
+                            foreach (var pet in petdata)
+                            {
+                                <div class="card bg-info border border-light" mb-3>
+                                    <span>Pet Name: @pet.name</span>
+                                    <span>Age: @pet.age</span>
+                                    <span>Type: @pet.species</span>
+                                    <span>Species: @pet.speciesName</span>
+                                </div>
+                                <br />
+                            }
+                        }
+
+                        @{
+                            var trainingsql = "SELECT People.firstName, Animals.name as animalName, " +
+                                                "COUNT(Enrolments.courseID) as trainingSessions " +
+                                                "FROM Owners " +
+                                                "JOIN People " +
+                                                "ON Owners.ownerID = People.personID " +
+                                                "JOIN Animals " +
+                                                "ON Owners.ownerID = Animals.ownerID " +
+                                                "JOIN Puppies " +
+                                                "ON Animals.animalID = Puppies.puppyID " +
+                                                "JOIN Enrolments " +
+                                                "ON Enrolments.puppyID = Puppies.puppyID " +
+                                                "JOIN Courses " +
+                                                "ON Courses.courseID = Enrolments.courseID " +
+                                                "WHERE Owners.ownerID = @0 " +
+                                                "GROUP BY People.firstName, Animals.name";
+
+                            var trainingdata = db.Query(trainingsql, Request.QueryString["id"]);
+                            <h5 class="card-title border border-light">Training details</h5>
+                            if (trainingdata.Count() == 0)
+                            {
+                                <div>
+                                    <span>Not Available...</span>
+                                </div>
+                                <br />
+                            }
+                            else
+                            {
+                                foreach (var train in trainingdata)
+                                {
+                                    <div class="card bg-info border border-light">
+                                        <span>Pet Name: @train.animalName</span>
+                                        <span>Training Sessions Attended: @train.trainingSessions</span>
+                                    </div>
+                                    <br />
+                                }
+                            }
+                        }
+
+                        @{
+                            var coursesql = "SELECT People.firstName, Animals.name as animalName, " +
+                                                "COUNT(Enrolments.courseID) as trainingSessions, " +
+                                                "Courses.name as courseName, " +
+                                                "Courses.date AS enrolledDate " +
+                                                "FROM Owners " +
+                                                "JOIN People " +
+                                                "ON Owners.ownerID = People.personID " +
+                                                "JOIN Animals " +
+                                                "ON Owners.ownerID = Animals.ownerID " +
+                                                "JOIN Puppies " +
+                                                "ON Animals.animalID = Puppies.puppyID " +
+                                                "JOIN Enrolments " +
+                                                "ON Enrolments.puppyID = Puppies.puppyID " +
+                                                "JOIN Courses " +
+                                                "ON Courses.courseID = Enrolments.courseID " +
+                                                "WHERE Owners.ownerID = @0 " +
+                                                "GROUP BY People.firstName, Animals.name, Courses.name, Courses.date";
+
+                            var coursesqldata = db.Query(coursesql, Request.QueryString["id"]);
+                            <h5 class="card-title border border-light">Course Details</h5>
+                            if (trainingdata.Count() == 0)
+                            {
+                                <div>
+                                    <span>Not Available...</span>
+                                </div>
+                                <br />
+                            }
+                            else
+                            {
+                                foreach (var course in coursesqldata)
+                                {
+                                    <div class="card bg-info border border-light">
+                                        <span>Pet Name: @course.animalName</span>
+                                        <span>Course Name: @course.courseName</span>
+                                        <span>Enrolment Date And Time: @course.enrolledDate</span>
+                                    </div>
+                                    <br />
+                                }
+                            }
+                        }
+
+                        @{
+                            var trainersql = "SELECT DISTINCT Courses.name AS courseName, " +
+                                             "CONCAT(People.firstName, ' ', People.lastName) AS trainerName " +
+                                             "FROM People " +
+                                             "JOIN Trainers ON People.personID = Trainers.trainerID " +
+                                             "JOIN Courses ON Trainers.trainerID = Courses.trainerID " +
+                                             "JOIN Enrolments ON Enrolments.courseID = Courses.courseID " +
+                                             "JOIN Puppies ON Enrolments.puppyID = Puppies.puppyID " +
+                                             "JOIN Animals ON Puppies.puppyID = Animals.animalID " +
+                                             "JOIN Owners ON Owners.ownerID = Animals.ownerID " +
+                                             "WHERE Owners.ownerID = @0";
+
+                            var trainerdata = db.Query(trainersql, Request.QueryString["id"]);
+                            <h5 class="card-title bg-info border border-light">Trainer Details</h5>
+                            if (trainerdata.Count() == 0)
+                            {
+                                <div>
+                                    <span>Not Available...</span>
+                                </div>
+                                <br />
+                            }
+                            else
+                            {
+                                foreach (var man in trainerdata)
+                                { <div class="card bg-info border border-light" mb-3>
+                                        <span>Trainer Name: @man.trainerName</span>
+                                        <span>Course Name: @man.courseName</span>
+                                    </div>
+                                    <br />
+                                }
+                            }
+
+                        }
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</body>
+<style>
+    body {
+        background-image: url('/Content/dog3.jpeg');
+        background-size: contain;
+        background-position: center;
+        padding: 30px;
+    }
+</style>
+
+
+
+

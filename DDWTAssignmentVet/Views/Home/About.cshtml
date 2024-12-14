@@ -1,0 +1,22 @@
+﻿@{
+    ViewBag.Title = "About";
+}
+<h2>@ViewBag.Title.</h2>
+
+<p>This web application maintains the data about the VetCMS systems in South Australia</p> 
+
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXJh4BUYM3Xo69sVgwvywT3B4N_nDDAW4J5A&usqp=CAU" alt="image of puppies" />
+
+<h3 class="mt-5">Steps to get started</h3>
+<ol>
+    <li>Firstly Add a new Database called VetCMS to the App_Data folder</li>
+    <li>Double click on your new Database to open up the Server Explorer</li>
+    <li>Right click on your new Database and select "New Query"</li>
+    <li>Copy and Paste, then run the "Create VetCMS statements against your new VetCMS database"</li>
+</ol>
+
+<p>Mac users: remember you will have to follow the Mac instructions on the course page under <b>Practical Database </b> - Mac Instructions. <br />
+    You will need to run the USE MASTER statement replacing AmazonOrders with VetCMS to create the Database.  <br />
+    Once done,  run the Create VetCMS script to build the tables and add data.  When finished, remember to open the Web.config and <br />
+    comment out the current VetCMS connection string and un-comment the Mac connection string with the 127.0.0.1 address making sure <br />
+    the database name and password match <b>your</b> Azure DataStudio connection credentials</p>

@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\cruci\\OneDrive\\Desktop\\Projects\\SQL HTML and Razor Page project\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{5694E20F-C82C-48A7-801E-0E951C455BD7}|DDWTAssignmentVet\\DDWTAssignmentVet.csproj|c:\\users\\cruci\\onedrive\\desktop\\projects\\sql html and razor page project\\ddwtassignmentvet\\views\\enrolments\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{5694E20F-C82C-48A7-801E-0E951C455BD7}|DDWTAssignmentVet\\DDWTAssignmentVet.csproj|solutionrelative:ddwtassignmentvet\\views\\enrolments\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 428,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\cruci\\OneDrive\\Desktop\\Projects\\SQL HTML and Razor Page project\\DDWTAssignmentVet\\Views\\Enrolments\\Index.cshtml",
+              "RelativeDocumentMoniker": "DDWTAssignmentVet\\Views\\Enrolments\\Index.cshtml",
+              "ToolTip": "C:\\Users\\cruci\\OneDrive\\Desktop\\Projects\\SQL HTML and Razor Page project\\DDWTAssignmentVet\\Views\\Enrolments\\Index.cshtml",
+              "RelativeToolTip": "DDWTAssignmentVet\\Views\\Enrolments\\Index.cshtml",
+              "ViewState": "AQIAAFoAAAAAAAAAAAAUwHkAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2024-06-10T05:12:29.491Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
